@@ -1,0 +1,75 @@
+services:
+  u1604:
+    build: .
+    container_name: u1604
+    environment:
+      - UBUNTU_CODENAME=xenial
+    cap_add: [ NET_ADMIN ]
+    devices: [ "/dev/net/tun" ]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    cpus: "2.0"
+    mem_limit: 4g
+    volumes:
+      - ./vmdata-1604:/vm
+    restart: unless-stopped
+
+  u1804:
+    build: .
+    container_name: u1804
+    environment:
+      - UBUNTU_CODENAME=bionic
+    cap_add: [ NET_ADMIN ]
+    devices: [ "/dev/net/tun" ]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    cpus: "2.0"
+    mem_limit: 4g
+    volumes:
+      - ./vmdata-1804:/vm
+    restart: unless-stopped
+
+  u2004:
+    build: .
+    container_name: u2004
+    environment:
+      - UBUNTU_CODENAME=focal
+    cap_add: [ NET_ADMIN ]
+    devices: [ "/dev/net/tun" ]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    cpus: "2.0"
+    mem_limit: 4g
+    volumes:
+      - ./vmdata-2004:/vm
+    restart: unless-stopped
+
+  u2204:
+    build: .
+    container_name: u2204
+    environment:
+      - UBUNTU_CODENAME=jammy
+    cap_add: [ NET_ADMIN ]
+    devices: [ "/dev/net/tun" ]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    cpus: "2.0"
+    mem_limit: 4g
+    volumes:
+      - ./vmdata-2204:/vm
+    restart: unless-stopped
+
+  u2404:
+    build: .
+    container_name: u2404
+    environment:
+      - UBUNTU_CODENAME=noble
+    cap_add: [ NET_ADMIN ]
+    devices: [ "/dev/net/tun" ]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    cpus: "2.0"
+    mem_limit: 4g
+    volumes:
+      - ./vmdata-2404:/vm
+    restart: unless-stopped
