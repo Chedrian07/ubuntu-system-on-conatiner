@@ -6,6 +6,9 @@ VERSIONS="all"          # all | xenial,bionic,focal,jammy,noble | 1604,1804,2004
 CPUS="2"                # 컨테이너 CPU 제한 (예: 2)
 MEMORY="4g"             # 컨테이너 메모리 제한 (예: 4g / 4096m)
 DISK="20"               # VM 디스크(GB)
+ACCEL="tcg,thread=multi" # QEMU accelerator 기본값
+CPU="qemu64"            # QEMU CPU 모델 기본값
+MACHINE=""              # QEMU machine 타입 기본값 (비어있으면 기본 pc 사용)
 FOREGROUND=0            # 1이면 attach 실행
 BUILD=0                 # 1이면 --build
 PREFIX="u"              # 서비스 접두사 (u2204 등)
@@ -20,6 +23,9 @@ Options:
   --cpus       N                   예: 2
   --memory     SIZE                예: 4g, 8192m
   --disk       GB                  예: 20
+  --accel      ACCEL               예: tcg,thread=multi (기본)
+  --cpu        CPU_MODEL           예: qemu64 (기본)
+  --machine    MACHINE_TYPE        예: q35 (기본 없음)
   --foreground                      포그라운드 실행(attach)
   --build                           빌드 강제
   --prefix     NAME                서비스 접두사(기본: u)
@@ -38,15 +44,44 @@ while [[ $# -gt 0 ]]; do
     --cpus) CPUS="$2"; shift 2;;
     --memory) MEMORY="$2"; shift 2;;
     --disk) DISK="$2"; shift 2;;
+    --accel) ACCEL="$2"; shift 2;;
+    --cpu) CPU="$2"; shift 2;;
+    --machine) MACHINE="$2"; shift 2;;
     --foreground) FOREGROUND=1; shift 1;;
     --build) BUILD=1; shift 1;;
     --prefix) PREFIX="$2"; shift 2;;
     -h|--help) usage; exit 0;;
     *) echo "Unknown arg: $1"; usage; exit 1;;
   esac
-done
+  done
 
-# 버전 해석: 입력 -> codename, tag(1604/1804/2004/2204/2404)
+# 버전 정규화 및 태그 함수 정의
+norm_ver() {
+  local v="$1"
+  v="$(echo "$v" | tr 'A-Z' 'a-z')"
+  case "$v" in
+    all) echo "xenial, bionic, focal, jammy, noble"; return 0;;
+    xenial|16|16.04|1604|u1604) echo "xenial"; return 0;;
+    bionic|18|18.04|1804|u1804) echo "bionic"; return 0;;
+    focal|20|20.04|2004|u2004)  echo "focal";  return 0;;
+    jammy|22|22.04|2204|u2204)  echo "jammy";  return 0;;
+    noble|24|24.04|2404|u2404)  echo "noble";  return 0;;
+    *) echo "$v";;
+  esac
+}
+
+to_tag() {
+  case "$1" in
+    xenial) echo "1604";;
+    bionic) echo "1804";;
+    focal)  echo "2004";;
+    jammy)  echo "2204";;
+    noble)  echo "2404";;
+    *) echo "0000";;
+  esac
+}
+
+# 버전 정규화 및 태그 함수 정의 (정의 위치 조정)
 norm_ver() {
   local v="$1"
   v="$(echo "$v" | tr 'A-Z' 'a-z')"
@@ -118,6 +153,9 @@ emit_service_yaml() {
       - VM_MAC=${vm_mac}
       - VM_VCPUS=${CPUS}
       - VM_RAM_MB=${VM_RAM_MB}
+      - QEMU_ACCEL=${ACCEL}
+      - QEMU_CPU=${CPU}
+      - QEMU_MACHINE=${MACHINE}
     cap_add:
       - NET_ADMIN
     devices:
@@ -131,6 +169,7 @@ emit_service_yaml() {
     restart: unless-stopped
 EOF
 }
+
 
 # VERSIONS 해석
 resolved=""

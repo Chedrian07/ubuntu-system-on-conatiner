@@ -18,6 +18,15 @@ VM_RAM_MB="${VM_RAM_MB:-4096}"
 # ENG : Provided by run.sh (unique per service)
 # KOR : run.sh에서 내려줌(서비스별 고유)
 VM_MAC="${VM_MAC:-52:54:00:22:04:00}"
+# ENG : QEMU accelerator
+# KOR : QEMU 가속기
+QEMU_ACCEL="${QEMU_ACCEL:-tcg,thread=multi}"
+# ENG : QEMU CPU model
+# KOR : QEMU CPU 모델
+QEMU_CPU="${QEMU_CPU:-qemu64}"
+# ENG : QEMU machine type (optional)
+# KOR : QEMU 머신 타입 (선택)
+QEMU_MACHINE="${QEMU_MACHINE:-}"
 
 # ENG : Internal guest network (isolated per container namespace)
 # KOR : 내부 게스트 네트 (컨테이너 네임스페이스마다 독립)
@@ -196,14 +205,21 @@ cloud-localds -N "${NET_CFG}" "${SEED}" "${USER_DATA}" "${META_DATA}"
 
 echo "[INFO] Starting QEMU (${UBUNTU_CODENAME}, x86_64, ${VM_VCPUS} vCPU, ${VM_RAM_MB}MB)..."
 
-exec qemu-system-x86_64 \
-  -accel tcg,thread=multi \
-  -cpu qemu64 \
-  -smp "${VM_VCPUS}" \
-  -m "${VM_RAM_MB}" \
+# Build QEMU command with optional machine
+QEMU_CMD="qemu-system-x86_64 \
+  -accel ${QEMU_ACCEL} \
+  -cpu ${QEMU_CPU} \
+  -smp ${VM_VCPUS} \
+  -m ${VM_RAM_MB} \
   -display none \
-  -drive if=virtio,file="${IMG}",format=qcow2 \
-  -drive if=virtio,file="${SEED}",format=raw,readonly=on \
-  -device virtio-net-pci,netdev=net0,mac="${VM_MAC}" \
-  -netdev tap,id=net0,ifname="${TAP_DEV}",script=no,downscript=no \
-  -serial mon:stdio
+  -drive if=virtio,file=${IMG},format=qcow2 \
+  -drive if=virtio,file=${SEED},format=raw,readonly=on \
+  -device virtio-net-pci,netdev=net0,mac=${VM_MAC} \
+  -netdev tap,id=net0,ifname=${TAP_DEV},script=no,downscript=no \
+  -serial mon:stdio"
+
+if [[ -n "${QEMU_MACHINE}" ]]; then
+  QEMU_CMD="${QEMU_CMD} -machine ${QEMU_MACHINE}"
+fi
+
+exec ${QEMU_CMD}

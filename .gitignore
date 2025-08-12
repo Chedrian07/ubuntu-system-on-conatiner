@@ -1,0 +1,9 @@
+# Generated compose file
+compose.gen.yml
+
+# Ignore VM data directories
+vmdata-*/
+
+# macOS system files
+.DS_Store
+
